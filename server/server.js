@@ -13,6 +13,8 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json()); //middleware for enabling JSON requests
 
+
+
 //browser/postman requests to save document in MongoDB database
 app.post('/todos', (req,res) => { //bodyParser converts the JSON req to object
     //create new instance of Todo:
@@ -29,6 +31,8 @@ app.post('/todos', (req,res) => { //bodyParser converts the JSON req to object
     });
 });
 
+
+
 //browser/postman requests to get all documents from MongoDB database
 app.get('/todos', (req,res) => { //bodyParser converts the JSON req to object
 
@@ -41,6 +45,8 @@ app.get('/todos', (req,res) => { //bodyParser converts the JSON req to object
         res.status(400).send(err);  //httpstatuses.com
     });
 });
+
+
 
 app.get('/todos/:id', (req, res) => {
     //res.send(req.params);   //vs req.query, req.body
@@ -61,6 +67,29 @@ app.get('/todos/:id', (req, res) => {
         res.status(400).send();
     })
 });
+
+
+
+app.delete('/todos/:id', (req, res) => {
+    const id = req.params.id;
+    
+    //validate the ID
+    if (!ObjectID.isValid(id)) {
+      return res.status(400).send(); //bad request
+    }
+    //remove the document
+    Todo.findByIdAndRemove(id)
+    .then((doc) => {
+      if(!doc){
+        return res.status(404).send();  //not found
+      }
+      res.send({doc});
+    }).catch((err) => {
+        res.status(400).send();
+    });
+});
+
+
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
