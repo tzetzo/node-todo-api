@@ -62,7 +62,7 @@ app.get('/todos/:id', (req, res) => {
     Todo.findById(id)
     .then((doc) => {
       if(!doc){
-        return res.status(404).send();  //not found
+        return res.status(404).send({status: 404, error: 'Not found'});  //not found
       }
       res.send({doc});  //gives us more flexibility as to what to send back like custom status etc;
     })
