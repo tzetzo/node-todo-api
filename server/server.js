@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 
@@ -72,7 +73,7 @@ app.get('/todos/:id', (req, res) => {
 
 app.delete('/todos/:id', (req, res) => {
     const id = req.params.id;
-    
+
     //validate the ID
     if (!ObjectID.isValid(id)) {
       return res.status(400).send(); //bad request
@@ -88,6 +89,38 @@ app.delete('/todos/:id', (req, res) => {
         res.status(400).send();
     });
 });
+
+
+
+//update a resource/document
+app.patch('/todos/:id', (req, res) => {
+    const id = req.params.id;
+    // console.log(req.body);  //req.body can be {text: 'some text here', completed: true, not_needed: 'text'}
+    const body = _.pick(req.body, ['text', 'completed']); //only keep the text & copleted properties; body will be {text: 'some text here', completed: true}
+    // console.log(body);
+    //validate the ID
+    if (!ObjectID.isValid(id)) {
+      return res.status(400).send(); //bad request
+    }
+
+    if(_.isBoolean(body.completed) && body.completed) {
+      body.completedAt = new Date().getTime();
+    } else {
+      body.completed = false;
+      body.completedAt = null;
+    }
+
+    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}) //similar to returnOriginal from MongoDB-update
+    .then((doc) => {
+      if(!doc){
+        return res.status(404).send();  //not found
+      }
+      res.send({doc});
+    })
+    .catch((e) => {
+      res.status(400).send();
+    })
+})
 
 
 
