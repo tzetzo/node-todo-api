@@ -113,3 +113,52 @@ describe('GET /todos/:id', () => {
     })
 
 });
+
+describe('DELETE /todos/:id', () => {
+
+    it('should return 400 Bad request when ID is not valid', (done) => {
+      //console.log(id);
+      request(app)  //using supertest library
+        .delete('/todos/123')  //using invalid mongoDB ID!
+        .expect(400)
+        .expect((res) => {
+          // console.log(res.body);
+          expect(res.body).toEqual({})  //using expect library
+        })
+        .end(done);
+    })
+    it('should return 404 Not found when there is no doc with that ID', (done) => {
+
+      request(app)  //using supertest library
+        .delete(`/todos/${new ObjectID().toHexString()}`) //using non-existing mongoDB ID!
+        .expect(404)
+        .expect((res) => {
+          expect(res.body).toEqual({})  //using expect library
+        })
+        .end(done);
+    })
+    it('should return the deleted doc', (done) => {
+
+      request(app)  //using supertest library
+        .delete(`/todos/${todos[0]._id.toHexString()}`)
+        .expect(200)
+        .expect((res) => {
+          //console.log(res.body);
+          expect(res.body.doc._id).toBe(`${todos[0]._id.toHexString()}`) ; //using expect library
+          expect(res.body.doc.text).toBe(todos[0].text) ;
+        })
+        .end((err,res) => {
+          if(err) {
+            return done(err);
+          }
+          Todo.findById(todos[0]._id.toHexString())
+            .then((todo) => { //should be null since deleted already
+              // console.log(todo);
+              expect(todo).toNotExist();
+              done();
+            })
+            .catch((e) => done(e));
+        });
+    })
+
+});
