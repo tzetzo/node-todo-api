@@ -5,8 +5,10 @@ const {ObjectID} = require('mongodb');
 const {app} = require('../server');
 const {Todo} = require('../models/todo'); //usd for additional testing
 
-const todos = [{_id: new ObjectID(), text: 'first test todo'},
-{text: 'second test todo'}];
+const todos = [
+    {_id: new ObjectID(), text: 'first test todo', completed: false},  //the last property simulates an unwanted input coming from the user
+    {_id: new ObjectID(), text: 'second test todo', completed: true}
+];
 
 //delete all documents in the collection & insert the todos documents in the collection; that way we have control over what values we are testing
 beforeEach((done) => {
@@ -160,5 +162,41 @@ describe('DELETE /todos/:id', () => {
             .catch((e) => done(e));
         });
     })
+
+});
+
+
+
+describe('PATCH /todos/:id', () => {
+
+    it('should update the todo', (done) => {
+      const body = {text: 'first test todo changed', completed: true, fakeprop: 'nooooo'}; //the last property simulates an unwanted input coming from the user
+      //console.log(id);
+      request(app)  //using supertest library
+        .patch(`/todos/${todos[0]._id.toHexString()}`)  //using invalid mongoDB ID!
+        .send(body)
+        .expect(200)
+        .expect((res) => {
+          // console.log(res.body);
+          expect(res.body.doc.completed).toBe(true);  //using expect library
+          expect(res.body.doc.completedAt).toBeA('number');
+          expect(res.body.doc.text).toBe(body.text);
+        })
+        .end(done);
+    });
+
+    it('should clear completedAt when todo is not completed', (done) => {
+      let body = {text: 'second test todo changed', completed: false, fakeprop: 'nooooo'}; //the last property simulates an unwanted input coming from the user
+      request(app)  //using supertest library
+        .patch(`/todos/${todos[1]._id.toHexString()}`)  //using invalid mongoDB ID!
+        .send(body)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.doc.completed).toBe(false);  //using expect library
+          expect(res.body.doc.completedAt).toNotExist();
+          expect(res.body.doc.text).toBe(body.text);
+        })
+        .end(done);
+    });
 
 });
