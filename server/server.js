@@ -3,18 +3,21 @@ require('./config/config.js');
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const {ObjectID} = require('mongodb');
 
 const {mongoose} = require('./db/mongoose');
-const {Todo} = require('./models/todo');  //import a Model
-const {User} = require('./models/user');  //import a Model
+const {Todo} = require('./models/todo');  //import a Collection Model
+const {User} = require('./models/user');  //import a Collection Model
+const {Post} = require('./models/post');  //import a Collection Model
 
 const app = express();
 
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json()); //middleware for enabling JSON requests
+app.use(cors()); //middleware for removing "No 'Access-Control-Allow-Origin' header"
 
 
 
@@ -125,6 +128,74 @@ app.patch('/todos/:id', (req, res) => {
 })
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//API for the react redux course
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//browser/postman requests to get all documents from MongoDB database
+app.get('/api/posts', (req,res) => { //bodyParser converts the JSON req to object
+
+    Post.find() //mongoose query; https://mongoosejs.com/docs/queries.html
+    .then((docs) => {
+        //console.log(JSON.stringify(docs,null,2));
+        res.send(docs);
+    })
+    .catch((err) => {
+        res.status(400).send(err);  //httpstatuses.com
+    });
+});
+app.get('/api/posts/:id', (req, res) => {
+    //res.send(req.params);   //vs req.query, req.body
+    const id = req.params.id;
+    //validate the ID
+    if (!ObjectID.isValid(id)) {
+      return res.status(400).send(); //bad request
+    }
+    //find the document
+    Post.findById(id)
+    .then((doc) => {
+      if(!doc){
+        return res.status(404).send({status: 404, error: 'Not found'});  //not found
+      }
+      res.send(doc);
+    })
+    .catch((err) => {
+        res.status(400).send();
+    })
+});
+//browser/postman requests to save document in MongoDB database
+app.post('/api/posts', (req,res) => { //bodyParser converts the JSON req to object
+    //create new instance of Todo:
+    const post = new Post(req.body);  //OR {text: req.body.text}
+
+    //save to MongoDB database:
+    post.save()
+    .then((doc) => {
+        //console.log(JSON.stringify(doc,null,2));
+        res.send(doc);
+    })
+    .catch((err) => {
+        res.status(400).send(err);  //httpstatuses.com
+    });
+});
+app.delete('/api/posts/:id', (req, res) => {
+    const id = req.params.id;
+
+    //validate the ID
+    if (!ObjectID.isValid(id)) {
+      return res.status(400).send(); //bad request
+    }
+    //remove the document
+    Post.findByIdAndRemove(id)
+    .then((doc) => {
+      if(!doc){
+        return res.status(404).send();  //not found
+      }
+      res.send(doc);
+    }).catch((err) => {
+        res.status(400).send();
+    });
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
