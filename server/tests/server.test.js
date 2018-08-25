@@ -97,7 +97,7 @@ describe('GET /todos/:id', () => {
         .get(`/todos/${new ObjectID().toHexString()}`) //using non-existing mongoDB ID!
         .expect(404)
         .expect((res) => {
-          expect(res.body).toEqual({})  //using expect library
+          expect(res.body).toEqual({status: 404, error: 'Not found'})  //using expect library
         })
         .end(done);
     })
