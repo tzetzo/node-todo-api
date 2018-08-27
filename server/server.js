@@ -11,6 +11,7 @@ const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./models/todo');  //import a Collection Model
 const {User} = require('./models/user');  //import a Collection Model
 const {Post} = require('./models/post');  //import a Collection Model
+const {authenticate} = require('./middleware/authenticate');
 
 const app = express();
 
@@ -23,8 +24,9 @@ app.use(cors()); //middleware for removing "No 'Access-Control-Allow-Origin' hea
 
 //browser/postman requests to save document in MongoDB database
 app.post('/todos', (req,res) => { //bodyParser converts the JSON req to object
+
     //create new instance of Todo:
-    const todo = new Todo(req.body);  //OR {text: req.body.text}
+    const todo = new Todo({text: req.body.text});  //make sure only text is requested!;
 
     //save to MongoDB database:
     todo.save()
@@ -125,7 +127,37 @@ app.patch('/todos/:id', (req, res) => {
     .catch((e) => {
       res.status(400).send();
     })
+});
+
+
+
+
+//browser/postman requests to save document in MongoDB database, add a JWT & save in MongoDB again, return the JWT & the document to the browser
+app.post('/users', (req,res) => { //bodyParser converts the JSON req to object
+    const body = _.pick(req.body, ['email', 'password']); //returns an object with the email & password properties & values;
+
+    //create new instance of Todo:
+    const user = new User(body);  //_.pick(req.body, ['text', 'completed']); //only keep the text & copleted properties;
+
+    //save to MongoDB database:
+    user.save()
+    .then(() => {
+        return user.generateAuthToken();  //call method which will add token to the user & save it again to the MongoDB database
+    })
+    .then((token) => {
+        res.header('x-auth', token).send(user); //x- is a custom header; return the document containing only the _id & email to the browser
+    })
+    .catch((err) => {
+        res.status(400).send(err);  //httpstatuses.com
+    });
+});
+
+
+app.get('/users/me', authenticate, (req, res) => { //browser requests this route with a token in the headers; the callback will be called when the next() is used in the middleware function
+  res.send(req.user); //accessing the property created in the authenticate middleware
 })
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
