@@ -4,6 +4,7 @@ const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 
 const {ObjectID} = require('mongodb');
 
@@ -132,14 +133,14 @@ app.patch('/todos/:id', (req, res) => {
 
 
 
-//browser/postman requests to save document in MongoDB database(document password is hashed before the save if not already hashed), add a JWT & save in MongoDB again, return the JWT & the document to the browser
+//browser/postman requests to save document(signup user) in MongoDB database(document password is hashed before the save if not already hashed), add a JWT & save in MongoDB again, return the JWT & the document to the browser
 app.post('/users', (req,res) => { //this route is used for signup!; bodyParser converts the JSON req to object
     const body = _.pick(req.body, ['email', 'password']); //returns an object with the email & password properties & values;
 
     //create new instance of User:
-    const user = new User(body);  //_.pick(req.body, ['text', 'completed']); //only keep the text & copleted properties;
+    const user = new User(body);
 
-    //save to MongoDB database:
+    //save the new user to the  MongoDB database:
     user.save() //UserSchema.pre() mongoose  middleware defined in user.js is called before save() to hash the password
     .then(() => {
         return user.generateAuthToken();  //call method which will add token to the user & save it again to the MongoDB database
@@ -149,6 +150,22 @@ app.post('/users', (req,res) => { //this route is used for signup!; bodyParser c
     })
     .catch((err) => {
         res.status(400).send(err);  //httpstatuses.com
+    });
+});
+
+app.post('/users/login', (req,res) => { //this route is used for login existing users!; bodyParser converts the JSON req to object
+    const body = _.pick(req.body, ['email', 'password']); //returns an object with the email & password properties & values;
+    const {email, password} = body;
+
+    //find the user in mongoDB
+    User.findByCredentials(email, password).then((user) => {
+        return user.generateAuthToken();  //creates additional token to the one/s already created for that user
+    })
+    .then((token) => {
+        res.header('x-auth', token).send(user); //x-auth is a custom header; return the document containing only the _id & email to the browser -> the mongoose toJSON method overrided in user.js is used behind the scenes
+    })
+    .catch((e) => {
+        res.status(400).send();
     });
 });
 

@@ -79,6 +79,28 @@ UserSchema.statics.findByToken = function (token) {
   })
 };
 
+//Model method; for verifying the user email & password; accessed in /users/login
+UserSchema.statics.findByCredentials = function (email, password) {
+    const User = this;
+
+    return User.findOne({ email }).then((user) => {
+        if(!user){
+          return Promise.reject();
+        }
+
+        return new Promise((resolve, reject) => {
+          //verify password provided corresponds to password for that email in MongoDB
+            bcrypt.compare(password, user.password, (err, res) => {
+              if(res){
+                  resolve(user);
+              } else {
+                  reject();
+              }
+            });
+        });
+    });
+};
+
 //hash the user password before saving it to the MongoDB
 UserSchema.pre('save', function(next) { //using mongoose middleware; runs the callback before we save a doc to the MongoDB -> https://mongoosejs.com/docs/middleware.html
   var user = this;
