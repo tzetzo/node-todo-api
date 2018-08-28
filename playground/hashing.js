@@ -1,14 +1,29 @@
 const {SHA256} = require('crypto-js');  //256 is the number of bits used for the resulting hash; npm i crypto-js --save-dev
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
-var data ={
-  id: 10
-};
+const password = '123abc';  //comes from the user
 
-var token = jwt.sign(data, '123abc');      //takes the object & the salt secret string, hashes it & returns the token
-console.log(token);
-var decoded = jwt.verify(token, '123abc') ;   //takes the token and the salt secret string & makes sure the data was not manipulated
-console.log('decoded', decoded);
+// bcrypt.genSalt(10, (err, salt) => {  //number of rounds to generate the salt
+//   bcrypt.hash(password, salt, (err, hash) => {
+//     console.log(hash);
+//   });
+// });
+
+const hashedPassword = '$2a$04$PW/E0sejbx9ujgfk4QmAwuE1eoIywCc2HkIpxdN6XaaLvTtw5qcxm'; //say comes from DB
+
+bcrypt.compare(password, hashedPassword, (err, res) => {
+  console.log(res);
+});
+
+// var data ={
+//   id: 10
+// };
+//
+// var token = jwt.sign(data, '123abc');      //takes the object & the salt secret string, hashes it & returns the token
+// console.log(token);
+// var decoded = jwt.verify(token, '123abc') ;   //takes the token and the salt secret string & makes sure the data was not manipulated
+// console.log('decoded', decoded);
 
 // //hash a string
 // var message = 'I am user number 3';

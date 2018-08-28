@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
   email: {
@@ -43,7 +44,7 @@ UserSchema.methods.toJSON = function () { //we override the mongoose toJSON meth
   return _.pick(user, ['_id', 'email']);
 };
 
-//Instance method; for generating the Token for each individual User; accessed in script.js as user.generateAuthToken()
+//Instance method; for generating & hashing the Token for each individual User; accessed in script.js as user.generateAuthToken()
 UserSchema.methods.generateAuthToken = function () {  //instance method used by individual document instances; this will represent every individual user instance
   var user = this;
   const access = 'auth';
@@ -57,7 +58,7 @@ UserSchema.methods.generateAuthToken = function () {  //instance method used by 
   });
 };
 
-//Model method; accessed in script.js as User.findByToken()
+//Model method; for verifying the user Token; accessed in authenticate.js as User.findByToken()
 UserSchema.statics.findByToken = function (token) {
   var User = this;
   var decoded;
@@ -77,6 +78,23 @@ UserSchema.statics.findByToken = function (token) {
     'tokens.access': decoded.access  //'auth'
   })
 };
+
+//hash the user password before saving it to the MongoDB
+UserSchema.pre('save', function(next) { //using mongoose middleware; runs the callback before we save a doc to the MongoDB -> https://mongoosejs.com/docs/middleware.html
+  var user = this;
+
+  if (user.isModified('password')) {  //only hash the password if it was modified(user requested to change it throught a request or the user signs up for the first time)
+      bcrypt.genSalt(10, (err, salt) => {  //number of rounds to generate the salt
+        bcrypt.hash(user.password, salt, (err, hash) => {
+          user.password = hash; //override the plain text password with hashed password
+          next();
+        });
+      });
+  } else {
+      next();
+  }
+
+});
 
 //create a Mongoose Model for the Documents we will store; creates a constructor function;
 const User = mongoose.model('User', UserSchema);  // Mongoose will auto create a Collection users; second argument is the Schema

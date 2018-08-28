@@ -132,20 +132,20 @@ app.patch('/todos/:id', (req, res) => {
 
 
 
-//browser/postman requests to save document in MongoDB database, add a JWT & save in MongoDB again, return the JWT & the document to the browser
-app.post('/users', (req,res) => { //bodyParser converts the JSON req to object
+//browser/postman requests to save document in MongoDB database(document password is hashed before the save if not already hashed), add a JWT & save in MongoDB again, return the JWT & the document to the browser
+app.post('/users', (req,res) => { //this route is used for signup!; bodyParser converts the JSON req to object
     const body = _.pick(req.body, ['email', 'password']); //returns an object with the email & password properties & values;
 
-    //create new instance of Todo:
+    //create new instance of User:
     const user = new User(body);  //_.pick(req.body, ['text', 'completed']); //only keep the text & copleted properties;
 
     //save to MongoDB database:
-    user.save()
+    user.save() //UserSchema.pre() mongoose  middleware defined in user.js is called before save() to hash the password
     .then(() => {
         return user.generateAuthToken();  //call method which will add token to the user & save it again to the MongoDB database
     })
     .then((token) => {
-        res.header('x-auth', token).send(user); //x- is a custom header; return the document containing only the _id & email to the browser
+        res.header('x-auth', token).send(user); //x-auth is a custom header; return the document containing only the _id & email to the browser -> the mongoose toJSON method overrided in user.js is used behind the scenes
     })
     .catch((err) => {
         res.status(400).send(err);  //httpstatuses.com
@@ -155,7 +155,7 @@ app.post('/users', (req,res) => { //bodyParser converts the JSON req to object
 
 app.get('/users/me', authenticate, (req, res) => { //browser requests this route with a token in the headers; the callback will be called when the next() is used in the middleware function
   res.send(req.user); //accessing the property created in the authenticate middleware
-})
+});
 
 
 

@@ -3,22 +3,15 @@ const request = require('supertest');
 const {ObjectID} = require('mongodb');
 
 const {app} = require('../server');
-const {Todo} = require('../models/todo'); //usd for additional testing
+const {Todo} = require('../models/todo'); //used for additional testing
+const {User} = require('../models/user'); //used for additional testing
 
-const todos = [
-    {_id: new ObjectID(), text: 'first test todo', completed: false},  //the last property simulates an unwanted input coming from the user
-    {_id: new ObjectID(), text: 'second test todo', completed: true}
-];
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed')
+
 
 //delete all documents in the collection & insert the todos documents in the collection; that way we have control over what values we are testing
-beforeEach((done) => {
-  Todo.remove({}).then(() => {  //delete all documents in the DB
-    return Todo.insertMany(todos);
-  }).then((docs) => {
-    // id = docs[0]._id;
-    done();
-  });
-});
+beforeEach(populateTodos);
+beforeEach(populateUsers);
 
 describe('POST /todos', () => {
 
@@ -43,7 +36,7 @@ describe('POST /todos', () => {
           })
           .catch((err) => done(err));
         });
-    })
+    });
 
     it('should not create todo with invalid body data', (done) => {
       request(app)  //using supertest library
@@ -200,3 +193,84 @@ describe('PATCH /todos/:id', () => {
     });
 
 });
+
+
+
+
+describe('GET /users/me', () => {
+    it('should return user user if authenticated', (done) => {
+        request(app)
+          .get('/users/me')
+          .set('x-auth', users[0].tokens[0].token)
+          .expect(200)
+          .expect((res) => {
+              expect(res.body._id).toBe(users[0]._id.toHexString());
+              expect(res.body.email).toBe(users[0].email);
+          })
+          .end(done);
+    });
+
+    it('should return 401 if not authenticated', (done) => {
+      request(app)
+          .get('/users/me')
+          // .set('x-auth', 'token')
+          .expect(401)
+          .expect((res) => {
+              expect(res.body).toEqual({});
+          })
+          .end(done);
+    });
+});
+
+
+ describe('POST /users', () => {
+    const email = 'veneta@example.com';
+    const password = '1162cm';
+
+    it('should create a user', (done) => {
+
+        request(app)
+          .post('/users')
+          .send({email, password})
+          .expect(200)
+          .expect((res) => {
+            expect(res.headers['x-auth']).toExist();
+            expect(res.body._id).toExist();
+            expect(res.body.email).toBe(email);
+          })
+          .end((err,res) => {
+            if(err) {   //if error the test will fail
+              return done(err);
+            }
+            User.find({ email })
+              .then((user) => { //should be null since deleted already
+                expect(user).toExist();
+                expect(user.password).toNotBe(password);
+                done();
+              })
+              .catch((e) => done(e));
+          });
+    });
+
+    it('should return validation errors if request invalid', (done) => {
+          request(app)
+            .post('/users')
+            .send({email: users[0].email, password: 'wrong'})
+            .expect(400)
+            .end(done);
+
+          // request(app)
+          //   .post('/users')
+          //   .send({email: 'asen@example.com', password: 'wrong'})
+          //   .expect(400)
+          //   .end(done);
+    });
+
+    it('should not create user if email in use', (done) => {
+          request(app)
+            .post('/users')
+            .send({email: users[0].email, password: users[0].password})
+            .expect(400)
+            .end(done);
+    });
+ })

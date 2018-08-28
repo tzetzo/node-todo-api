@@ -12,7 +12,7 @@ const authenticate = (req, res, next) => {
     }
 
     //assign the user object to the request object property user so it
-    //can be used inside the callback of the route function that used the authenticate middleware
+    //can be accessed inside the callback of the route function that used the authenticate middleware
     req.user = user;
     //req.token = token;
     next(); //allows the callback function of the route function to be called
