@@ -143,7 +143,7 @@ app.post('/users', (req,res) => { //this route is used for signup!; bodyParser c
     //save the new user to the  MongoDB database:
     user.save() //UserSchema.pre() mongoose  middleware defined in user.js is called before save() to hash the password
     .then(() => {
-        user.generateAuthToken();  //call method which will add token to the user & save it again to the MongoDB database
+        return user.generateAuthToken();  //call method which will add token to the user & save it again to the MongoDB database
     })
     .then((token) => {
         res.header('x-auth', token).send(user); //x-auth is a custom header; return the document containing only the _id & email to the browser -> the mongoose toJSON method overrided in user.js is used behind the scenes
@@ -158,7 +158,7 @@ app.post('/users/login', (req,res) => { //this route is used for login existing 
     const body = _.pick(req.body, ['email', 'password']); //returns an object with the email & password properties & values;
     const {email, password} = body;
     let loggedInUser;
-    
+
     //find the user in mongoDB
     User.findByCredentials(email, password) //should immediately return Promise object in order to be able to use the following then():
     .then((user) => { //to be able to use then() here we return asynchronous code
@@ -169,6 +169,15 @@ app.post('/users/login', (req,res) => { //this route is used for login existing 
         res.header('x-auth', token).send(loggedInUser); //x-auth is a custom header; return the document containing only the _id & email to the browser -> the mongoose toJSON method overrided in user.js is used behind the scenes
     })
     .catch((e) => {
+        res.status(400).send();
+    });
+});
+
+app.delete('/users/me/token', authenticate, (req, res) => {
+    req.user.removeToken(req.token)
+    .then(() => {
+        res.status(200).send();
+    }).catch(() => {
         res.status(400).send();
     });
 });

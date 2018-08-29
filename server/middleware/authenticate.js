@@ -13,10 +13,10 @@ const authenticate = (req, res, next) => {
       //     return Promise.reject(); //will fire the catch below
       // }
 
-      //assign the user object to the request object property user so it
+      //assign the user object & the token to the request object property user so it
       //can be accessed inside the callback of the route function that used the authenticate middleware
       req.user = user;
-      //req.token = token;
+      req.token = token;
       next(); //allows the callback function of the route function to be called
   }).catch((e) => { //fired when token was invalid or no token provided
       res.status(401).send();

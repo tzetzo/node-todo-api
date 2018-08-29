@@ -65,6 +65,23 @@ UserSchema.methods.generateAuthToken = function () {  //instance method used by 
     });
 };
 
+UserSchema.methods.removeToken = function (token) {  //instance method used by individual document instances; this will represent every individual user instance
+    const user = this;
+    return new Promise((resolve,reject) => {
+
+        user.update({
+          $pull: {
+            tokens: {token}
+          }
+        }).then(() => {
+            resolve();
+        }).catch(() => {
+            reject();
+        })
+
+    });
+};
+
 //Model method; for verifying the user Token; accessed in authenticate.js as User.findByToken()
 UserSchema.statics.findByToken = function (token) {
     const User = this;
