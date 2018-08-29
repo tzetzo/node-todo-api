@@ -70,8 +70,8 @@ UserSchema.methods.removeToken = function (token) {  //instance method used by i
     return new Promise((resolve,reject) => {
 
         user.update({
-          $pull: {
-            tokens: {token}
+          $pull: {        //removes items from an array that match certain criteria
+            tokens: {token}   //pull & delete from the tokens array any object that has a token property equal to the token argument passed
           }
         }).then(() => {
             resolve();

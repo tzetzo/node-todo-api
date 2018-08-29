@@ -173,6 +173,7 @@ app.post('/users/login', (req,res) => { //this route is used for login existing 
     });
 });
 
+//Logout route; logout by deleting the Token;
 app.delete('/users/me/token', authenticate, (req, res) => {
     req.user.removeToken(req.token)
     .then(() => {
