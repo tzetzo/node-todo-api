@@ -29,7 +29,7 @@ const populateUsers = (done) => {
     const userOne = new User(users[0]).save(); //individually save each document so that the UserSchema.pre('save'...) from user.jscan run and hash the password
     const userTwo = new User(users[1]).save();  //asynchronous call to MongoDB
 
-    Promise.all([userOne, userTwo]); //makes sure 2+ promises are resolved
+    Promise.all([userOne, userTwo]); //makes sure 2+ promises(asynchronous functions) are resolved
   }).then(() => done());
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

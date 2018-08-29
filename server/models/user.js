@@ -46,58 +46,76 @@ UserSchema.methods.toJSON = function () { //we override the mongoose toJSON meth
 
 //Instance method; for generating & hashing the Token for each individual User; accessed in script.js as user.generateAuthToken()
 UserSchema.methods.generateAuthToken = function () {  //instance method used by individual document instances; this will represent every individual user instance
-  var user = this;
-  const access = 'auth';
+    const user = this;
+    return new Promise((resolve,reject) => {
 
-  const token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString(); //using the unique _id property of the user created by MongoDB
-  user.tokens = user.tokens.concat([{access, token}]);  //OR [...user.tokens, {access, token}]
+          const access = 'auth';
 
-  //save the user with the newly generated Token in the MongoDB
-  return user.save().then((doc) => {
-    return token;
-  });
+          const token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString(); //using the unique _id property of the user created by MongoDB
+          user.tokens = user.tokens.concat([{access, token}]);  //OR [...user.tokens, {access, token}]
+
+          //save the user with the newly generated Token in the MongoDB
+          user.save()
+          .then((doc) => {
+              resolve(token);
+          }).catch((err) => {
+              reject(err);
+          });
+
+    });
 };
 
 //Model method; for verifying the user Token; accessed in authenticate.js as User.findByToken()
 UserSchema.statics.findByToken = function (token) {
-  var User = this;
-  var decoded;
+    const User = this;
+    return new Promise((resolve,reject) => {
 
-  try {
-      decoded = jwt.verify(token, 'abc123'); //makes sure the token was not modified
-  } catch (e) {
-      // return new Promise((res,rej) => {
-      //   reject();
-      // }) OR:
-      return Promise.reject();
-  }
+          //make sure the token was not modified
+          jwt.verify(token, 'abc123', (err, decoded) => {
+              if(err){
+                reject();
+              }
 
-  return User.findOne({
-    _id: decoded._id,       //jwt.io to see what properties your decoded token has; the key is the property of the document we are quering against
-    'tokens.token': token,  //quotes needed when quering a nested property of the document
-    'tokens.access': decoded.access  //'auth'
-  })
+              User.findOne({
+                _id: decoded._id,       //jwt.io to see what properties your decoded token has; the key is the property of the document we are quering against
+                'tokens.token': token,  //quotes needed when quering a nested property of the document
+                'tokens.access': decoded.access  //'auth'
+              })
+              .then((user) => {
+                  if(!user){
+                      reject();
+                  }
+                  resolve(user);
+              });
+          });
+
+    });
 };
 
 //Model method; for verifying the user email & password; accessed in /users/login
 UserSchema.statics.findByCredentials = function (email, password) {
     const User = this;
+    return new Promise((resolve, reject) => {
 
-    return User.findOne({ email }).then((user) => {
-        if(!user){
-          return Promise.reject();
-        }
-
-        return new Promise((resolve, reject) => {
-          //verify password provided corresponds to password for that email in MongoDB
-            bcrypt.compare(password, user.password, (err, res) => {
-              if(res){
-                  resolve(user);
-              } else {
+          User.findOne({ email }) //asynchronous call which we retrieve with then()
+          .then((user) => {
+              if(!user){
                   reject();
               }
-            });
-        });
+
+              //verify password provided corresponds to password for that email in MongoDB
+              bcrypt.compare(password, user.password, (err, res) => {
+                  if(res){
+                      resolve(user);
+                  } else {
+                      reject();
+                  }
+              });
+          })
+          .catch((err) => {
+            reject();
+          });
+
     });
 };
 
