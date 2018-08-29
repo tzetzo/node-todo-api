@@ -157,20 +157,21 @@ app.post('/users', (req,res) => { //this route is used for signup!; bodyParser c
 app.post('/users/login', (req,res) => { //this route is used for login existing users!; bodyParser converts the JSON req to object
     const body = _.pick(req.body, ['email', 'password']); //returns an object with the email & password properties & values;
     const {email, password} = body;
-
+    let loggedInUser;
+    
     //find the user in mongoDB
     User.findByCredentials(email, password) //should immediately return Promise object in order to be able to use the following then():
     .then((user) => { //to be able to use then() here we return asynchronous code
+      loggedInUser = user;
       return user.generateAuthToken();  //creates additional token to the one/s already created for that user
     })
     .then((token) => {
-        res.header('x-auth', token).send(user); //x-auth is a custom header; return the document containing only the _id & email to the browser -> the mongoose toJSON method overrided in user.js is used behind the scenes
+        res.header('x-auth', token).send(loggedInUser); //x-auth is a custom header; return the document containing only the _id & email to the browser -> the mongoose toJSON method overrided in user.js is used behind the scenes
     })
     .catch((e) => {
         res.status(400).send();
     });
 });
-
 
 app.get('/users/me', authenticate, (req, res) => { //browser requests this route with a token in the headers; the callback will be called when the next() is used in the middleware function
   res.send(req.user); //accessing the property created in the authenticate middleware

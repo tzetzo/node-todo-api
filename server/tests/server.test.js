@@ -11,6 +11,7 @@ const {todos, populateTodos, users, populateUsers} = require('./seed/seed')
 
 //delete all documents in the collection & insert the todos documents in the collection; that way we have control over what values we are testing
 beforeEach(populateTodos);
+//beforeEach runs before every use case i.e. before every if()
 beforeEach(populateUsers);
 
 describe('POST /todos', () => {
@@ -273,4 +274,52 @@ describe('GET /users/me', () => {
             .expect(400)
             .end(done);
     });
+ })
+
+
+
+
+ describe('POST /users/login', () => {
+
+    it('should login user and return auth token', (done) => {
+      request(app)
+        .post('/users/login')
+        .send({email: users[1].email, password: users[1].password})
+        .expect(200)
+        .expect((res) => {
+          expect(res.headers['x-auth']).toExist();
+        })
+        .end((err, res) => {
+            if(err) {
+              return done(err);
+            }
+            User.findById(users[1]._id).then((user) => {
+                expect(user.tokens[0]).toInclude({
+                  access: 'auth',
+                  token: res.headers['x-auth']
+                });
+                done();
+            }).catch((e) => done(e));
+        });
+    });
+
+    it('should reject invalid login', (done) => {
+      request(app)
+        .post('/users/login')
+        .send({email: users[1].email, password: 'wrong'})
+        .expect(400)
+        .expect((res) => {
+          expect(res.headers['x-auth']).toNotExist();
+        })
+        .end((err, res) => {
+            if(err) {
+              return done(err);
+            }
+            User.findById(users[1]._id).then((user) => {  //also check if no token has been created
+                expect(user.tokens.length).toBe(0);
+                done();
+            }).catch((e) => done(e));
+        });
+    });
+
  })
