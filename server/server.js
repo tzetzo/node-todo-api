@@ -24,10 +24,13 @@ app.use(cors()); //middleware for removing "No 'Access-Control-Allow-Origin' hea
 
 
 //browser/postman requests to save document in MongoDB database
-app.post('/todos', (req,res) => { //bodyParser converts the JSON req to object
+app.post('/todos', authenticate, (req,res) => { //bodyParser converts the JSON req to object
 
     //create new instance of Todo:
-    const todo = new Todo({text: req.body.text});  //make sure only text is requested!;
+    const todo = new Todo({
+      text: req.body.text,
+      _creator: req.user._id  //accessed through authenticate.js
+    });  //make sure only text is requested!;
 
     //save to MongoDB database:
     todo.save()
@@ -43,9 +46,9 @@ app.post('/todos', (req,res) => { //bodyParser converts the JSON req to object
 
 
 //browser/postman requests to get all documents from MongoDB database
-app.get('/todos', (req,res) => { //bodyParser converts the JSON req to object
+app.get('/todos', authenticate, (req,res) => { //bodyParser converts the JSON req to object
 
-    Todo.find() //mongoose query; https://mongoosejs.com/docs/queries.html
+    Todo.find({_creator: req.user._id}) //mongoose query; https://mongoosejs.com/docs/queries.html
     .then((docs) => {
         //console.log(JSON.stringify(docs,null,2));
         res.send({docs}); //{docs} is equivalent to {docs: docs}; better way to return res instead of just an array
@@ -57,7 +60,7 @@ app.get('/todos', (req,res) => { //bodyParser converts the JSON req to object
 
 
 
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
     //res.send(req.params);   //vs req.query, req.body
     const id = req.params.id;
     //validate the ID
@@ -65,7 +68,7 @@ app.get('/todos/:id', (req, res) => {
       return res.status(400).send(); //bad request
     }
     //find the document
-    Todo.findById(id)
+    Todo.findOne({_id: id, _creator: req.user._id})
     .then((doc) => {
       if(!doc){
         return res.status(404).send({status: 404, error: 'Not found'});  //not found
@@ -79,7 +82,7 @@ app.get('/todos/:id', (req, res) => {
 
 
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
     const id = req.params.id;
 
     //validate the ID
@@ -87,7 +90,7 @@ app.delete('/todos/:id', (req, res) => {
       return res.status(400).send(); //bad request
     }
     //remove the document
-    Todo.findByIdAndRemove(id)
+    Todo.findOneAndRemove({_id: id, _creator: req.user._id})
     .then((doc) => {
       if(!doc){
         return res.status(404).send();  //not found
@@ -101,7 +104,7 @@ app.delete('/todos/:id', (req, res) => {
 
 
 //update a resource/document
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
     const id = req.params.id;
     // console.log(req.body);  //req.body can be {text: 'some text here', completed: true, not_needed: 'text'}
     const body = _.pick(req.body, ['text', 'completed']); //only keep the text & copleted properties; body will be {text: 'some text here', completed: true}
@@ -118,7 +121,7 @@ app.patch('/todos/:id', (req, res) => {
       body.completedAt = null;
     }
 
-    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}) //similar to returnOriginal from MongoDB-update
+    Todo.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true}) //similar to returnOriginal from MongoDB-update
     .then((doc) => {
       if(!doc){
         return res.status(404).send();  //not found

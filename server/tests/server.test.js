@@ -21,6 +21,7 @@ describe('POST /todos', () => {
       const text = 'test todo text';
       request(app)  //using supertest library
         .post('/todos')
+        .set('x-auth', users[0].tokens[0].token)
         .send({text})
         .expect(200)
         .expect((res) => {
@@ -42,6 +43,7 @@ describe('POST /todos', () => {
     it('should not create todo with invalid body data', (done) => {
       request(app)  //using supertest library
         .post('/todos')
+        .set('x-auth', users[0].tokens[0].token)
         .send({})
         .expect(400)
         .end((err,res) => {
@@ -63,9 +65,10 @@ describe('GET /todos', () => {
 
       request(app)  //using supertest library
         .get('/todos')
+        .set('x-auth', users[0].tokens[0].token)
         .expect(200)
         .expect((res) => {
-          expect(res.body.docs.length).toBe(2)  //using expect library
+          expect(res.body.docs.length).toBe(1)  //using expect library
         })
         .end(done);
     })
@@ -78,6 +81,7 @@ describe('GET /todos/:id', () => {
       //console.log(id);
       request(app)  //using supertest library
         .get('/todos/123')  //using invalid mongoDB ID!
+        .set('x-auth', users[0].tokens[0].token)
         .expect(400)
         .expect((res) => {
           // console.log(res.body);
@@ -89,6 +93,7 @@ describe('GET /todos/:id', () => {
 
       request(app)  //using supertest library
         .get(`/todos/${new ObjectID().toHexString()}`) //using non-existing mongoDB ID!
+        .set('x-auth', users[0].tokens[0].token)
         .expect(404)
         .expect((res) => {
           expect(res.body).toEqual({status: 404, error: 'Not found'})  //using expect library
@@ -99,12 +104,21 @@ describe('GET /todos/:id', () => {
 
       request(app)  //using supertest library
         .get(`/todos/${todos[0]._id.toHexString()}`)
+        .set('x-auth', users[0].tokens[0].token)
         .expect(200)
         .expect((res) => {
           //console.log(res.body);
           expect(res.body.doc._id).toBe(`${todos[0]._id}`) ; //using expect library
           expect(res.body.doc.text).toBe(todos[0].text) ;
         })
+        .end(done);
+    })
+    it('should not return a Todo doc created by other User', (done) => {
+
+      request(app)  //using supertest library
+        .get(`/todos/${todos[1]._id.toHexString()}`)
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(404)
         .end(done);
     })
 
@@ -116,6 +130,7 @@ describe('DELETE /todos/:id', () => {
       //console.log(id);
       request(app)  //using supertest library
         .delete('/todos/123')  //using invalid mongoDB ID!
+        .set('x-auth', users[1].tokens[0].token)
         .expect(400)
         .expect((res) => {
           // console.log(res.body);
@@ -127,6 +142,7 @@ describe('DELETE /todos/:id', () => {
 
       request(app)  //using supertest library
         .delete(`/todos/${new ObjectID().toHexString()}`) //using non-existing mongoDB ID!
+        .set('x-auth', users[1].tokens[0].token)
         .expect(404)
         .expect((res) => {
           expect(res.body).toEqual({})  //using expect library
@@ -136,13 +152,33 @@ describe('DELETE /todos/:id', () => {
     it('should return the deleted doc', (done) => {
 
       request(app)  //using supertest library
-        .delete(`/todos/${todos[0]._id.toHexString()}`)
+        .delete(`/todos/${todos[1]._id.toHexString()}`)
+        .set('x-auth', users[1].tokens[0].token)
         .expect(200)
         .expect((res) => {
           //console.log(res.body);
-          expect(res.body.doc._id).toBe(`${todos[0]._id.toHexString()}`) ; //using expect library
-          expect(res.body.doc.text).toBe(todos[0].text) ;
+          expect(res.body.doc._id).toBe(`${todos[1]._id.toHexString()}`) ; //using expect library
+          expect(res.body.doc.text).toBe(todos[1].text) ;
         })
+        .end((err,res) => {
+          if(err) {
+            return done(err);
+          }
+          Todo.findById(todos[1]._id.toHexString())
+            .then((todo) => { //should be null since deleted already
+              // console.log(todo);
+              expect(todo).toNotExist();
+              done();
+            })
+            .catch((e) => done(e));
+        });
+    })
+    it('should not delete a doc belonging to other user', (done) => {
+
+      request(app)  //using supertest library
+        .delete(`/todos/${todos[0]._id.toHexString()}`)
+        .set('x-auth', users[1].tokens[0].token)
+        .expect(404)
         .end((err,res) => {
           if(err) {
             return done(err);
@@ -150,7 +186,7 @@ describe('DELETE /todos/:id', () => {
           Todo.findById(todos[0]._id.toHexString())
             .then((todo) => { //should be null since deleted already
               // console.log(todo);
-              expect(todo).toNotExist();
+              expect(todo).toExist();
               done();
             })
             .catch((e) => done(e));
@@ -168,6 +204,7 @@ describe('PATCH /todos/:id', () => {
       //console.log(id);
       request(app)  //using supertest library
         .patch(`/todos/${todos[0]._id.toHexString()}`)  //using invalid mongoDB ID!
+        .set('x-auth', users[0].tokens[0].token)
         .send(body)
         .expect(200)
         .expect((res) => {
@@ -178,11 +215,20 @@ describe('PATCH /todos/:id', () => {
         })
         .end(done);
     });
-
+    it('should not update a Todo created by other user', (done) => {
+      let body = {text: 'third test todo changed', completed: false, fakeprop: 'nooooo'}; //the last property simulates an unwanted input coming from the user
+      request(app)  //using supertest library
+        .patch(`/todos/${todos[0]._id.toHexString()}`)  //using invalid mongoDB ID!
+        .set('x-auth', users[1].tokens[0].token)
+        .send(body)
+        .expect(404)
+        .end(done);
+    });
     it('should clear completedAt when todo is not completed', (done) => {
       let body = {text: 'second test todo changed', completed: false, fakeprop: 'nooooo'}; //the last property simulates an unwanted input coming from the user
       request(app)  //using supertest library
         .patch(`/todos/${todos[1]._id.toHexString()}`)  //using invalid mongoDB ID!
+        .set('x-auth', users[1].tokens[0].token)
         .send(body)
         .expect(200)
         .expect((res) => {
@@ -294,7 +340,7 @@ describe('GET /users/me', () => {
               return done(err);
             }
             User.findById(users[1]._id).then((user) => {
-                expect(user.tokens[0]).toInclude({
+                expect(user.tokens[1]).toInclude({
                   access: 'auth',
                   token: res.headers['x-auth']
                 });
@@ -316,7 +362,7 @@ describe('GET /users/me', () => {
               return done(err);
             }
             User.findById(users[1]._id).then((user) => {  //also check if no token has been created
-                expect(user.tokens.length).toBe(0);
+                expect(user.tokens.length).toBe(1);
                 done();
             }).catch((e) => done(e));
         });
