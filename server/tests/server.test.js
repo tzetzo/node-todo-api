@@ -137,7 +137,7 @@ describe('DELETE /todos/:id', () => {
           expect(res.body).toEqual({})  //using expect library
         })
         .end(done);
-    })
+    });
     it('should return 404 Not found when there is no doc with that ID', (done) => {
 
       request(app)  //using supertest library
@@ -148,7 +148,7 @@ describe('DELETE /todos/:id', () => {
           expect(res.body).toEqual({})  //using expect library
         })
         .end(done);
-    })
+    });
     it('should return the deleted doc', (done) => {
 
       request(app)  //using supertest library
@@ -167,12 +167,13 @@ describe('DELETE /todos/:id', () => {
           Todo.findById(todos[1]._id.toHexString())
             .then((todo) => { //should be null since deleted already
               // console.log(todo);
-              expect(todo).toNotExist();
+              expect(todo).toBeFalsy();
               done();
             })
             .catch((e) => done(e));
         });
-    })
+    });
+
     it('should not delete a doc belonging to other user', (done) => {
 
       request(app)  //using supertest library
@@ -186,12 +187,12 @@ describe('DELETE /todos/:id', () => {
           Todo.findById(todos[0]._id.toHexString())
             .then((todo) => { //should be null since deleted already
               // console.log(todo);
-              expect(todo).toExist();
+              expect(todo).toBeTruthy();
               done();
             })
             .catch((e) => done(e));
         });
-    })
+    });
 
 });
 
@@ -210,7 +211,8 @@ describe('PATCH /todos/:id', () => {
         .expect((res) => {
           // console.log(res.body);
           expect(res.body.doc.completed).toBe(true);  //using expect library
-          expect(res.body.doc.completedAt).toBeA('number');
+          // expect(res.body.doc.completedAt).toBeA('number');  //old version of expect
+          expect(typeof res.body.doc.completedAt).toBe('number');  //new version of expect
           expect(res.body.doc.text).toBe(body.text);
         })
         .end(done);
@@ -233,7 +235,7 @@ describe('PATCH /todos/:id', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.doc.completed).toBe(false);  //using expect library
-          expect(res.body.doc.completedAt).toNotExist();
+          expect(res.body.doc.completedAt).toBeFalsy();
           expect(res.body.doc.text).toBe(body.text);
         })
         .end(done);
@@ -281,8 +283,8 @@ describe('GET /users/me', () => {
           .send({email, password})
           .expect(200)
           .expect((res) => {
-            expect(res.headers['x-auth']).toExist();
-            expect(res.body._id).toExist();
+            expect(res.headers['x-auth']).toBeTruthy();
+            expect(res.body._id).toBeTruthy();
             expect(res.body.email).toBe(email);
           })
           .end((err,res) => {
@@ -291,8 +293,8 @@ describe('GET /users/me', () => {
             }
             User.find({ email })
               .then((user) => { //should be null since deleted already
-                expect(user).toExist();
-                expect(user.password).toNotBe(password);
+                expect(user).toBeTruthy();
+                expect(user.password).not.toBe(password);
                 done();
               })
               .catch((e) => done(e));
@@ -333,14 +335,14 @@ describe('GET /users/me', () => {
         .send({email: users[1].email, password: users[1].password})
         .expect(200)
         .expect((res) => {
-          expect(res.headers['x-auth']).toExist();
+          expect(res.headers['x-auth']).toBeTruthy();
         })
         .end((err, res) => {
             if(err) {
               return done(err);
             }
             User.findById(users[1]._id).then((user) => {
-                expect(user.tokens[1]).toInclude({
+                expect(user.tokens[1]).toMatchObject({
                   access: 'auth',
                   token: res.headers['x-auth']
                 });
@@ -355,7 +357,7 @@ describe('GET /users/me', () => {
         .send({email: users[1].email, password: 'wrong'})
         .expect(400)
         .expect((res) => {
-          expect(res.headers['x-auth']).toNotExist();
+          expect(res.headers['x-auth']).toBeFalsy();
         })
         .end((err, res) => {
             if(err) {
