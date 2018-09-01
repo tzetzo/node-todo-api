@@ -51,7 +51,7 @@ UserSchema.methods.generateAuthToken = function () {  //instance method used by 
 
           const access = 'auth';
 
-          const token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString(); //using the unique _id property of the user created by MongoDB
+          const token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString(); //using the unique _id property of the user created by MongoDB; //process.env.JWT_SECRET is set inside config.json
           user.tokens = user.tokens.concat([{access, token}]);  //OR [...user.tokens, {access, token}]
 
           //save the user with the newly generated Token in the MongoDB
@@ -88,7 +88,7 @@ UserSchema.statics.findByToken = function (token) {
     return new Promise((resolve,reject) => {
 
           //make sure the token was not modified
-          jwt.verify(token, 'abc123', (err, decoded) => {
+          jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => { //set inside config.json
               if(err){
                 reject();
               }
