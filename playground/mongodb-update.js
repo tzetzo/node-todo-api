@@ -9,10 +9,10 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => { //connec
 
   // db.collection('Todos').findOneAndUpdate({ //http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOneAndUpdate
   //     _id: new ObjectID('5b76b1f870faa13f2191162d')   //filter
-  // },{
+  // },{                                                 //update
   //     $set: {completed: true} //https://docs.mongodb.com/manual/reference/operator/update/
   // },{
-  //     returnOriginal: false
+  //     returnOriginal: false                          //options
   // }).then((result) => {
   //   console.log(result);
   // });
@@ -21,9 +21,9 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => { //connec
       _id: new ObjectID("5b765751028bdd18b0b6de89")   //filter
   },{
       $set: {name: "Tzvetan"}, //https://docs.mongodb.com/manual/reference/operator/update/
-      $inc: {age: 1}
+      $inc: {age: 1}  //increment by 1 - for numbers       //update
   },{
-      returnOriginal: false
+      returnOriginal: false                           //options
   }).then((result) => {
     console.log(result);
   });

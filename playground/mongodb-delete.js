@@ -7,13 +7,14 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => { //connec
   }
   console.log('Connected to MongoDB server');
 
-  // db.collection('Users').deleteMany({name: 'Tzvetan'})
+  // db.collection('Users').deleteMany({name: 'Tzvetan'}) //the then() & catch() are not required!
   // .then((result) => {
   //   console.log(result);
   // })
   // .catch((err) => {
   //   console.log('Unable to find documents with that name',err);
   // })
+
 
   // db.collection('Todos').deleteOne({text: 'Eat lunch'})
   // .then((result) => {
@@ -23,9 +24,9 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => { //connec
   //   console.log('Unable to find documents with that name',err);
   // })
 
-  db.collection('Users').findOneAndDelete({_id: new ObjectID("5b765a1270423b1ee8e3640d")}) //returns the Document after deleting it
+  db.collection('Users').findOneAndDelete({_id: new ObjectID("5bbc9531c4c2d13e40b4d462")}) //returns the Document after deleting it
   .then((result) => {
-    console.log(result);
+    console.log(JSON.stringify(result, null, 2));
   })
   .catch((err) => {
     console.log('Unable to find documents with that name',err);

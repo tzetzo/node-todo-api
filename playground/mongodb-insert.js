@@ -20,9 +20,9 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => { //connec
   //   console.log(JSON.stringify(result.ops,undefined,2));
   // });
 
-  db.collection('Users').insertOne({  //Todos collection will be auto created along with the DB TodoApp
+  db.collection('Users').insertOne({  //Todos collection will be auto created along with the DB Users
     //_id: 123  //can be provided manually; otherwise MongoDB auto generates it
-    name: 'Tzvetan',  //insert document into MongoDB DB
+    name: 'Veneta',  //insert document into MongoDB DB
     age: 40,
     location: 'Sofia'
   }, (err, result) => {
