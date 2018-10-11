@@ -1,3 +1,5 @@
+//can be independantly executed with "node playground/mongodb-update.js"
+
 //const MongoClient = require('mongodb').MongoClient;
 const {MongoClient, ObjectID} = require('mongodb');
 

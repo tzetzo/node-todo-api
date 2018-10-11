@@ -1,3 +1,5 @@
+//can be independantly executed with "node playground/mongoose-remove.js"
+
 const {ObjectID} = require('mongodb');
 
 const {mongoose} = require('../server/db/mongoose');

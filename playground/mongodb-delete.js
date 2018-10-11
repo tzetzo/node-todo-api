@@ -1,3 +1,5 @@
+//can be independantly executed with "node playground/mongodb-delete.js"
+
 //const MongoClient = require('mongodb').MongoClient;
 const {MongoClient, ObjectID} = require('mongodb');
 
