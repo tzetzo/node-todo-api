@@ -1,24 +1,25 @@
+//const {mongoose} = require('../db/mongoose'); //OR
 const mongoose = require('mongoose');
 
 //create a Mongoose Model for the Documents we will store; creates a constructor function;
-const Todo = mongoose.model('Todo', { // Mongoose will auto create a Collection todos; second argument is the Schema
-  text: {
-    type: String,
-    required: true,
-    minlength: 1,
-    trim: true
+const Todo = mongoose.model('Todo', { // Mongoose will auto create a Collection todos on first Document save if the Collection does not exist; second argument is the Schema
+  text: { //field
+    type: String, //Mongoose typecasts boolean and numbers to strings when a string is expected!
+    required: true, //validator
+    minlength: 1, //validator
+    trim: true  //validator
   }, //https://mongoosejs.com/docs/validation.html
-  completed: {
-    type: Boolean,
-    default: false
+  completed: {  //field
+    type: Boolean,  //validation
+    default: false  //default when creating docs; changed with app.patch()
   },
-  completedAt: {
-    type: Number,
-    default: null
+  completedAt: {  //field
+    type: Number, //validation
+    default: null //default when creating docs; changed with app.patch()
   },
-  _creator: { //the ID of the User who created the Todo
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
+  _creator: { //field with the ID of the User who created the Todo
+    type: mongoose.Schema.Types.ObjectId, //validation
+    required: true, //validator
   }
 });
 

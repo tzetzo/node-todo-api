@@ -16,22 +16,22 @@ beforeEach(populateUsers);
 
 describe('POST /todos', () => {
 
-    it('should create a new todo document', (done) => {
+    it('should create a new todo document', (done) => { //done required for asynchronous tests
 
       const text = 'test todo text';
       request(app)  //using supertest library
         .post('/todos')
         .set('x-auth', users[0].tokens[0].token)
-        .send({text})
+        .send({text}) //supertest will convert the object to JSON & on the server body-parser will convert it back to object
         .expect(200)
-        .expect((res) => {
-          expect(res.body.text).toBe(text);  //using expect library  //OR expect(res.body.text).toBe(text))
+        .expect((res) => {  //document is returned by the server as res!
+          expect(res.body.text).toBe(text);  //using expect library
         })
         .end((err,res) => { //some additional testing
           if(err){
             return done(err);
           }
-          Todo.find({text}).then((todos) => {
+          Todo.find({text}).then((todos) => { //check if document is in the DB
             expect(todos.length).toBe(1);
             expect(todos[0].text).toBe(text);
             done();
@@ -160,11 +160,11 @@ describe('DELETE /todos/:id', () => {
           expect(res.body.doc._id).toBe(`${todos[1]._id.toHexString()}`) ; //using expect library
           expect(res.body.doc.text).toBe(todos[1].text) ;
         })
-        .end((err,res) => {
+        .end((err,res) => { //some additional testing
           if(err) {
             return done(err);
           }
-          Todo.findById(todos[1]._id.toHexString())
+          Todo.findById(todos[1]._id.toHexString()) //check if document is in the DB
             .then((todo) => { //should be null since deleted already
               // console.log(todo);
               expect(todo).toBeFalsy();
@@ -199,6 +199,7 @@ describe('DELETE /todos/:id', () => {
 
 
 describe('PATCH /todos/:id', () => {
+//we can also add test cases for the valid ID & document not found like in 'DELETE /todos/:id'
 
     it('should update the todo', (done) => {
       const body = {text: 'first test todo changed', completed: true, fakeprop: 'nooooo'}; //the last property simulates an unwanted input coming from the user
@@ -206,7 +207,7 @@ describe('PATCH /todos/:id', () => {
       request(app)  //using supertest library
         .patch(`/todos/${todos[0]._id.toHexString()}`)  //using invalid mongoDB ID!
         .set('x-auth', users[0].tokens[0].token)
-        .send(body)
+        .send(body) //send the update
         .expect(200)
         .expect((res) => {
           // console.log(res.body);

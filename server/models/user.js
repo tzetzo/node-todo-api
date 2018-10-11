@@ -1,4 +1,6 @@
+//const {mongoose} = require('../db/mongoose'); //OR
 const mongoose = require('mongoose');
+
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
@@ -6,9 +8,9 @@ const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
   email: {
-    type: String,
-    required: [true, 'User email required'],
-    minlength: 1,
+    type: String, //Mongoose typecasts boolean and numbers to strings when a string is expected!
+    required: [true, 'User email required'],  //validator
+    minlength: 1, //validator
     trim: true,
     unique: true,  //makes sure there are no Documents with the same email in the Collection
     validate: {   //Custom validation: https://mongoosejs.com/docs/validation.html
@@ -154,7 +156,7 @@ UserSchema.pre('save', function(next) { //using mongoose middleware; runs the ca
 });
 
 //create a Mongoose Model for the Documents we will store; creates a constructor function;
-const User = mongoose.model('User', UserSchema);  // Mongoose will auto create a Collection users; second argument is the Schema
+const User = mongoose.model('User', UserSchema);  // Mongoose will auto create a Collection users on first Document save ifthe Collection does not exist; second argument is the Schema
 
 module.exports = {User};
 

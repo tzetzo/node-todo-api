@@ -40,7 +40,7 @@ const populateUsers = (done) => {
 const todos = [{
   _id: new ObjectID(),
   text: 'First test todo',
-  _creator: userOneId
+  _creator: userOneId //connects the todo to the user who created it
 }, {
   _id: new ObjectID(),
   text: 'Second test todo',
