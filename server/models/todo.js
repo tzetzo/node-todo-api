@@ -17,9 +17,12 @@ const Todo = mongoose.model('Todo', { // Mongoose will auto create a Collection 
     type: Number, //validation
     default: null //default when creating docs; changed with app.patch()
   },
-  _creator: { //field with the ID of the User who created the Todo
-    type: mongoose.Schema.Types.ObjectId, //validation
-    required: true, //validator
+  // used to Associate the todos with the user id – To make the todos endpoints private
+  // that way users can access only todos they created
+  //(099 lesson)
+  _creator: { //field with the User._id who created the Todo
+    type: mongoose.Schema.Types.ObjectId, //validation; https://mongoosejs.com/docs/schematypes.html#objectids
+    required: true //validator
   }
 });
 

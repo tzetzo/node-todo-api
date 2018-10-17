@@ -343,7 +343,7 @@ describe('GET /users/me', () => {
               return done(err);
             }
             User.findById(users[1]._id).then((user) => {
-                expect(user.tokens[1]).toMatchObject({
+                expect(user.tokens[1]).toMatchObject({  //if not working try ...user.toObject().tokens[1]...
                   access: 'auth',
                   token: res.headers['x-auth']
                 });
@@ -393,6 +393,5 @@ describe('GET /users/me', () => {
             .catch((e) => done(e));
         });
     });
-
 
  })

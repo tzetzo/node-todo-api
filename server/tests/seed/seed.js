@@ -14,7 +14,7 @@ const users = [
       password: 'userOnePass',
       tokens: [{
         access: 'auth',
-        token: jwt.sign({_id: userOneId, access: 'auth'}, process.env.JWT_SECRET).toString()  //set inside config.json
+        token: jwt.sign({_id: userOneId, access: 'auth'}, process.env.JWT_SECRET).toString()  //environment variable set inside config.json
       }]
     },
     {
@@ -23,14 +23,14 @@ const users = [
       password: 'userTwoPass',
       tokens: [{
         access: 'auth',
-        token: jwt.sign({_id: userTwoId, access: 'auth'}, process.env.JWT_SECRET).toString()  //set inside config.json
+        token: jwt.sign({_id: userTwoId, access: 'auth'}, process.env.JWT_SECRET).toString()  //environment variable set inside config.json
       }]
     }
 ];
 
 const populateUsers = (done) => {
   User.deleteMany({}).then(() => {
-    const userOne = new User(users[0]).save(); //individually save each document so that the UserSchema.pre('save'...) from user.jscan run and hash the password
+    const userOne = new User(users[0]).save(); //individually save each document so that the UserSchema.pre('save'...) from user.js can run and hash the password
     const userTwo = new User(users[1]).save();  //asynchronous call to MongoDB
 
     Promise.all([userOne, userTwo]); //makes sure 2+ promises(asynchronous functions) are resolved
@@ -40,7 +40,7 @@ const populateUsers = (done) => {
 const todos = [{
   _id: new ObjectID(),
   text: 'First test todo',
-  _creator: userOneId //connects the todo to the user who created it
+  _creator: userOneId //associate the todo with the user who created it
 }, {
   _id: new ObjectID(),
   text: 'Second test todo',
